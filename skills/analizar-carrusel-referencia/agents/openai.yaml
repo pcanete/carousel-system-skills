@@ -1,0 +1,6 @@
+interface:
+  display_name: "Analizar carrusel de referencia"
+  short_description: "Extrae patrones de carruseles sin guardar imágenes"
+  default_prompt: "Usa $analizar-carrusel-referencia para analizar este carrusel público y separar evidencia de interpretación."
+policy:
+  allow_implicit_invocation: true

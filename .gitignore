@@ -1,0 +1,9 @@
+node_modules/
+build/
+final/
+*.png
+*.jpg
+*.jpeg
+__pycache__/
+*.pyc
+.DS_Store

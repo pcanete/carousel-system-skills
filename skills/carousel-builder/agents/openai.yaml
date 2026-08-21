@@ -1,0 +1,6 @@
+interface:
+  display_name: "Carousel Builder"
+  short_description: "Produce carruseles sociales con guion, render y QA"
+  default_prompt: "Usa $carousel-builder para convertir esta idea en un carrusel listo para publicar."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,11 @@
+{
+  "name": "carousel-system-skills",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference analysis and production-ready social carousel skills for Codex",
+  "scripts": {
+    "check": "node scripts/check-repository.mjs",
+    "test": "node scripts/check-repository.mjs"
+  }
+}
