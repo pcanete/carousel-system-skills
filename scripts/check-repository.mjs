@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
+  mkdirSync,
   existsSync,
   mkdtempSync,
   readFileSync,
@@ -172,5 +173,135 @@ for (const invariant of [
 ]) {
   assert.ok(renderScript.includes(invariant), `render invariant missing: ${invariant}`);
 }
+
+// --- versiones -------------------------------------------------------------
+// La tabla de docs/versioning.md afirmaba versiones que ningún skill
+// declaraba. Una tabla que nada puede contradecir es decorativa.
+const declaredVersions = new Map();
+
+for (const name of skillNames) {
+  const skill = readFileSync(join(root, "skills", name, "SKILL.md"), "utf8");
+  const frontmatter = skill.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/)[1];
+  const version = frontmatter.match(/version:\s*"?(\d+\.\d+\.\d+)"?/)?.[1];
+  assert.ok(version, `skills/${name}/SKILL.md no declara metadata.version`);
+  declaredVersions.set(name, version);
+}
+
+for (const document of ["docs/versioning.md", "README.md"]) {
+  const file = join(root, document);
+  if (!existsSync(file)) continue;
+
+  const rows = readFileSync(file, "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.trimStart().startsWith("|") && /\d+\.\d+\.\d+/.test(line));
+
+  for (const [name, version] of declaredVersions) {
+    for (const row of rows) {
+      if (!row.includes(name)) continue;
+      assert.ok(
+        row.includes(version),
+        `${document}: ${name} debería decir ${version} — ${row.trim()}`,
+      );
+    }
+  }
+}
+
+// --- sintaxis de todo lo ejecutable ---------------------------------------
+for (const name of skillNames) {
+  const directory = join(root, "skills", name, "scripts");
+  if (!existsSync(directory)) continue;
+
+  for (const path of filesUnder(directory).filter((value) => value.endsWith(".mjs"))) {
+    const result = spawnSync(process.execPath, ["--check", path], { encoding: "utf8" });
+    assert.equal(result.status, 0, `sintaxis inválida en ${path}: ${result.stderr}`);
+  }
+}
+
+// --- extractor de Instagram -----------------------------------------------
+// Es el único ejecutable del analizador y estaba fuera de toda verificación,
+// mientras build.mjs tenía pruebas de comportamiento. Depende del formato de
+// una página ajena que puede cambiar sin aviso: lo verificable localmente es
+// qué enlaces acepta y que un cambio de formato produzca un error que lo diga.
+const python = ["python3", "python"].find((candidate) => {
+  const probe = spawnSync(candidate, ["--version"], { encoding: "utf8" });
+  return probe.status === 0;
+});
+
+assert.ok(python, "hace falta Python 3 para verificar el extractor");
+
+const extractorTests = spawnSync(
+  python,
+  [join(root, "skills", "analizar-carrusel-referencia", "scripts", "test_extractor.py")],
+  { encoding: "utf8" },
+);
+
+assert.equal(
+  extractorTests.status,
+  0,
+  `pruebas del extractor fallidas:\n${extractorTests.stdout}${extractorTests.stderr}`,
+);
+
+// --- compuerta editorial ---------------------------------------------------
+// Los tres estados importan por igual. Una compuerta que calla cuando le falta
+// una pieza es peor que no tenerla: la entrega afirma un filtro que no corrió.
+const editorial = join(root, "skills", "carousel-builder", "scripts", "check-editorial.mjs");
+const gateFixture = mkdtempSync(join(tmpdir(), "carousel-editorial-"));
+const piecePath = join(gateFixture, "guion.md");
+writeFileSync(piecePath, "Una afirmación sin preguntas retóricas.\n");
+
+const clientBrand = join(gateFixture, "cliente", "brand");
+mkdirSync(clientBrand, { recursive: true });
+writeFileSync(
+  join(clientBrand, "BRAND_RULES.json"),
+  JSON.stringify({
+    version: "0.1.0",
+    brand: { name: "fixture" },
+    rules: [
+      {
+        id: "sin-pregunta-retorica",
+        kind: "forbid",
+        statement: "No abrir con pregunta retórica.",
+        scope: ["opening"],
+        severity: "block",
+        detect: { type: "regex", pattern: "^\\s*¿", flags: "i" },
+      },
+    ],
+  }),
+);
+
+function runGate(extra) {
+  return spawnSync(process.execPath, [editorial, "--piece", piecePath, ...extra], {
+    encoding: "utf8",
+  });
+}
+
+const withoutRules = runGate(["--client-dir", join(gateFixture, "sin-cliente")]);
+assert.equal(withoutRules.status, 0, "sin reglas no debe bloquear la producción");
+assert.match(
+  withoutRules.stdout,
+  /Sin verificación editorial/,
+  "sin reglas tiene que decir que no verificó",
+);
+
+const withoutChecker = runGate([
+  "--client-dir",
+  join(gateFixture, "cliente"),
+  "--checker",
+  join(gateFixture, "no-existe.mjs"),
+]);
+assert.match(
+  withoutChecker.stdout,
+  /no se encontró/,
+  "con reglas y sin verificador tiene que decirlo",
+);
+
+const requiredRun = runGate([
+  "--client-dir",
+  join(gateFixture, "cliente"),
+  "--checker",
+  join(gateFixture, "no-existe.mjs"),
+  "--require",
+]);
+assert.notEqual(requiredRun.status, 0, "--require debe fallar si la verificación no corrió");
 
 console.log("repository validation OK");

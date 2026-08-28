@@ -1,6 +1,8 @@
 ---
 name: carousel-builder
 description: Diseña y produce carruseles de Instagram listos para publicar —guion, slides JPG, caption y alt-text— mediante un pipeline local o una plantilla de Canva. Usar para crear o transformar contenido en carruseles sociales y para instalar su sistema editorial y visual por cliente; no activar para analizar referencias, presentaciones, sitios web, fotos o videos sueltos.
+metadata:
+  version: "0.2.0"
 ---
 
 # Carousel Builder
@@ -26,7 +28,17 @@ El sistema visual puede inferirse de assets autorizados solo como borrador. Ante
 1. **Definir el input.** Puede ser una idea del atlas, una nota a transformar, un guion existente o una ficha creada por `analizar-carrusel-referencia`. Una ficha aporta mecanismos, nunca frases o identidad para copiar.
 2. **Elegir estructura.** Leer [references/formatos.md](references/formatos.md) cuando haya que seleccionar o adaptar un formato narrativo.
 3. **Escribir el guion.** Una idea por slide, hook sin preámbulo y datos trazables. Verificar afirmaciones factuales que lo requieran y conservar las fuentes en `guion.md`.
-4. **Confirmar aprobación editorial.** Una aprobación explícita ya presente en el pedido o en un guion marcado como aprobado satisface esta condición. Si el texto todavía es propuesta, mostrarlo y esperar aprobación antes del render final.
+4. **Verificar y confirmar aprobación editorial.** Antes de mostrar el texto, correr la verificación contra las reglas del cliente:
+
+   ```powershell
+   node <skill>/scripts/check-editorial.mjs --piece <pieza>/guion.md --client-dir <cliente>
+   ```
+
+   El paso 7 tiene QA que no se desactiva para forzar una salida. Este es su equivalente para el contenido: verifica la forma del slide y también lo que dice.
+
+   Las reglas viven en `<cliente>/brand/BRAND_RULES.json` y el verificador lo aporta `brand-dna-scanner`. Si falta cualquiera de los dos, el script lo informa y la verificación **no corrió**: eso se dice en la entrega, no se omite. Las reglas que requieren criterio se reportan como pendientes de juicio y viajan así a quien aprueba; nunca se dan por cumplidas.
+
+   Una aprobación explícita ya presente en el pedido o en un guion marcado como aprobado satisface la condición de aprobación. No sustituye a la verificación: se corre igual, porque su resultado es parte de lo que se aprueba.
 5. **Resolver fotos.** Usar solo fotos designadas por el usuario o ya vinculadas de forma inequívoca a la pieza. Se pueden localizar dentro del workspace autorizado; no elegir imágenes por preferencia propia. Copiar las seleccionadas a `fotos/` sin borrar los originales ni vaciar carpetas de entrada.
 6. **Construir el spec.** Leer [references/esquemas.md](references/esquemas.md) y validar rutas, tipos y campos obligatorios.
 7. **Renderizar y revisar.** Ejecutar una de las vías siguientes. No entregar si el QA falla o si la revisión visual detecta texto cortado, fuentes sustituidas o imágenes ausentes.
@@ -64,4 +76,4 @@ No publicar fotos del cliente en servicios anónimos o URLs temporales para puen
 
 ## Entrega
 
-Informar la cantidad de slides, la vía utilizada, el estado de QA, la carpeta entregable y cualquier dato o asset pendiente. No afirmar que una pieza está lista para publicar si faltan aprobación editorial, fotos requeridas o QA visual.
+Informar la cantidad de slides, la vía utilizada, el estado de QA, el resultado de la verificación editorial —incluidas las reglas que quedaron pendientes de juicio, o que no se pudo verificar—, la carpeta entregable y cualquier dato o asset pendiente. No afirmar que una pieza está lista para publicar si faltan aprobación editorial, fotos requeridas o QA visual.

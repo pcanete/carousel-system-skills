@@ -1,6 +1,8 @@
 ---
 name: analizar-carrusel-referencia
 description: Analiza carruseles públicos de Instagram u otras plataformas a partir de un enlace y extrae texto, traducción, sistema visual y patrones narrativos sin guardar imágenes. Usar cuando el usuario pida estudiar, comparar o registrar un carrusel como referencia; no activar para enlaces generales ni para producir una pieza nueva.
+metadata:
+  version: "0.1.1"
 ---
 
 # Analizar carrusel de referencia

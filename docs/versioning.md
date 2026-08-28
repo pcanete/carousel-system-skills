@@ -4,8 +4,8 @@ Each skill follows semantic versioning independently.
 
 | Skill | Current version | Contract |
 | --- | ---: | --- |
-| analizar-carrusel-referencia | 0.1.0 | textual record 0.1.x |
-| carousel-builder | 0.1.0 | carousel config and slides 0.1.x |
+| analizar-carrusel-referencia | 0.1.1 | textual record 0.1.x |
+| carousel-builder | 0.2.0 | carousel config and slides 0.1.x |
 
 ## Rules
 
@@ -16,5 +16,5 @@ Each skill follows semantic versioning independently.
 Repository releases describe the included version of both skills. Suggested
 skill-specific tags:
 
-- `analizar-carrusel-referencia-v0.1.0`
-- `carousel-builder-v0.1.0`
+- `analizar-carrusel-referencia-v0.1.1`
+- `carousel-builder-v0.2.0`
