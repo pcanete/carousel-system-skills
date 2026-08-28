@@ -52,15 +52,37 @@ def choose_resource(node: dict[str, Any], width: int) -> str:
     return node.get("display_url", "")
 
 
+def parse_media(page: str) -> dict[str, Any]:
+    """Aísla el parseo del HTML para poder verificarlo sin salir a la red.
+
+    Depende del formato de la página embed de Instagram, que puede cambiar sin
+    aviso. Cuando eso pasa, el error tiene que decirlo: un fallo genérico manda
+    a buscar el problema en el post en lugar de en el extractor.
+    """
+    match = CONTEXT_RE.search(page)
+    if not match:
+        raise RuntimeError(
+            "Instagram no expuso el contexto público del post. "
+            "Puede ser un post privado, eliminado o restringido por edad; o "
+            "Instagram cambió el formato de la página embed, y entonces el "
+            "extractor necesita actualizarse."
+        )
+    context_text = json.loads('"' + match.group(1) + '"')
+    context = json.loads(html.unescape(context_text))
+    try:
+        return context["gql_data"]["shortcode_media"]
+    except (KeyError, TypeError) as exc:
+        raise RuntimeError(
+            "El contexto de Instagram no tiene la forma esperada: falta "
+            "gql_data.shortcode_media. El formato cambió y el extractor "
+            "necesita actualizarse."
+        ) from exc
+
+
 def extract(url: str, width: int) -> dict[str, Any]:
     canonical, shortcode = canonicalize(url)
     page = fetch_text(canonical + "embed/")
-    match = CONTEXT_RE.search(page)
-    if not match:
-        raise RuntimeError("Instagram no expuso el contexto público del post")
-    context_text = json.loads('"' + match.group(1) + '"')
-    context = json.loads(html.unescape(context_text))
-    media = context["gql_data"]["shortcode_media"]
+    media = parse_media(page)
     edges = media.get("edge_sidecar_to_children", {}).get("edges", [])
     if not edges:
         edges = [{"node": media}]

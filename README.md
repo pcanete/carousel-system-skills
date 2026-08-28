@@ -122,7 +122,7 @@ Consulta [SECURITY.md](SECURITY.md) antes de reportar una vulnerabilidad.
 
 ## Estado
 
-Los dos skills comienzan en versión `0.1.0`. El proyecto está en etapa temprana y evolucionará con pruebas reales y cambios compatibles documentados.
+Cada skill se versiona por separado; la tabla de [versioning.md](docs/versioning.md) es la fuente y la revisión del repositorio falla si un `SKILL.md` y esa tabla dejan de coincidir. El proyecto está en etapa temprana y evolucionará con pruebas reales y cambios compatibles documentados.
 
 ## Licencia
 
